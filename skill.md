@@ -1,6 +1,6 @@
 ---
 name: whetstone
-version: 0.1.0
+version: 0.2.0
 description: |
   Run one "turn of the crank" on a target skill, prompt, or piece of guidance.
   Apply the skill to a real test input, self-grade against its own rules,
@@ -39,8 +39,9 @@ Drive a single iteration on a target skill so that running it again on the same 
 - **Never** edit the target skill file before Phase 5 (Fold back). Self-improvement during Phase 3 happens in output drafts only; the skill file changes only after the user answers the Phase 4 questions.
 - **Never** ask the user open-ended questions like "what should I change?" Constrain to A/B/C or yes/no. Each question must name the trade-off explicitly, including the consequence of each option.
 - **Never** mark the skill "done." Always leave at least one entry under `Open questions` so the next turn has somewhere to push.
-- **Always** announce each phase in one sentence so the user can interrupt before you commit to a path.
+- **Always** announce each phase in one sentence *when running interactively* so the user can interrupt before you commit to a path. When the run is captured as a written artifact (a turn doc), phase headers replace the inline announcement — do not duplicate.
 - **Always** show a diff (or quoted before/after) when editing the skill in Phase 5.
+- **Phase 4 questions target the target skill only.** Surface ambiguities the *target* skill did not specify. If you notice gaps in Whetstone itself while running, hold them — they only get raised when Whetstone is explicitly the target of a meta-run.
 
 ## Soft rules
 
@@ -63,7 +64,7 @@ Apply the skill to the test input exactly as written. Produce output. Show it to
 
 ### Phase 3 — Self-grade and improve
 
-List every rule from `Hard rules` and `Soft rules`. For each, mark the Phase 2 output `pass` or `fail` and quote the offending span. Rewrite the output to address every `fail`. Re-grade. Repeat until either every rule passes or the turn budget is exhausted. Show the final output and the final grade.
+List every rule from `Hard rules` and `Soft rules`. For each, mark the Phase 2 output `pass` or `fail` and quote the offending span. Rewrite the output to address every `fail`. Re-grade. **Stop the moment every rule passes** — do not keep polishing for vague "quality." If the rule-passing output still feels weak, that is signal the rules are too loose; capture the felt-weakness as a Phase 4 question instead. Halt also when the turn budget is exhausted. Show the final output and the final grade.
 
 ### Phase 4 — Surface ambiguities as A/B questions
 
@@ -105,7 +106,7 @@ User has `pr-title.md`. They give you a diff as the test input.
 
 - **Skill conflicts with itself.** Two rules disagree on the same input. Surface the conflict as a Phase 4 question; do not silently pick one.
 - **User gives no test input.** Refuse to start. Suggest the user paste a real example. Do not invent test inputs.
-- **Self-grade plateau on turn 1.** If the first output passes every rule cold, the skill is too loose. Force a Phase 4 question targeting whatever felt arbitrary while you were producing the output.
+- **Self-grade plateau on turn 1.** If the first output passes every rule cold, the skill is too loose. Force a Phase 4 question targeting whatever felt arbitrary while you were producing the output. **In Phase 5, the answer parks under `Open questions`; do not promote it directly to a Hard/Soft rule.** Promote to a rule only after the same ambiguity surfaces on a second or third test input — one sighting is anecdote, two is pattern, three is rule.
 - **Skill grows unwieldy.** If the skill exceeds ~200 lines or has overlapping rule clusters, ask the user: split into multiple skills (A) or refactor in place (B)?
 - **User pushes back on a Phase 5 edit.** Treat their pushback as a fresh Phase 4 answer; revise the diff before applying it.
 
@@ -115,3 +116,5 @@ User has `pr-title.md`. They give you a diff as the test input.
 - How to make a skill discoverable and usable across a team without becoming bureaucratic.
 - When to retire a skill versus keep iterating on it.
 - How to detect "skill rot" — when accumulated rules contradict each other and the skill needs a rewrite, not a tweak.
+- **Promotion threshold.** Q3 set the policy "park first, promote after 2–3 sightings." Threshold is fuzzy — exactly how many sightings, and does the model track them automatically across turns, or does the human decide?
+- **Boundary between target-skill gaps and Whetstone-skill gaps.** Q2 ruled "target only" during normal runs, but the model still has to classify ambiguities at the moment they arise. Heuristic for that classification not yet specified.
