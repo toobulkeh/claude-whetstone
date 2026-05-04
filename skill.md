@@ -1,60 +1,117 @@
-# The Whetstone Loop
+---
+name: whetstone
+version: 0.1.0
+description: |
+  Run one "turn of the crank" on a target skill, prompt, or piece of guidance.
+  Apply the skill to a real test input, self-grade against its own rules,
+  improve the output, then surface ambiguities to the user as A/B questions
+  and fold the answers back into the skill file. The skill is the durable
+  artifact; the chat is exhaust. Use when the user says "run the whetstone
+  loop", "sharpen this skill", "improve this prompt", "turn the crank on X",
+  or wants to compound learnings into a versioned skill instead of
+  re-prompting one-off.
+argument-hint: "[path/to/target/skill.md] [path/to/test-input]"
+allowed-tools:
+  - Read
+  - Edit
+  - Write
+  - Bash
+  - Glob
+  - Grep
+---
 
-> A technique for building skills that sharpen themselves.
+# Whetstone
 
-Stop optimizing the deliverable. Optimize the system that produces deliverables.
+You are running the Whetstone Loop: building a skill that sharpens itself. The skill file is the asset. The conversation is throwaway. Your job is to drive one turn of the crank — apply, grade, improve, ask, fold — without skipping phases.
 
-You build a small piece of guidance (a `skill.md`, a prompt, a checklist), then turn a crank: have the model use it, grade itself, improve, and let you sand off the rough edges with targeted feedback. The skill becomes the source of truth — every future "turn" is run against it, and every learning goes back into it.
+## Goal
 
-## Why it works
+Drive a single iteration on a target skill so that running it again on the same input would produce a better result with fewer questions. Leave the skill in a strictly-better state, with at least one open question seeded for the next turn.
 
-Most prompting is one-shot: you write, you run, you tweak in the moment, you lose the lesson. The Whetstone Loop captures the lesson in a durable artifact. The artifact compounds — every turn either confirms the rules or refines them. Over a week, the skill is dramatically better than anything you could have written up front.
+## Inputs you must identify before running
 
-You're not building the product. You're building the factory.
+1. **Target skill file.** A `skill.md` (or equivalent guidance file) the user is iterating on. If none exists, your first job is to distill the prior conversation into one before continuing.
+2. **Test input.** A real task the skill should handle. Refuse to start the loop without one — ask the user to paste a real example.
+3. **Turn budget.** How many self-grade/improve cycles before stopping. Default: 2. Hard cap: 3.
+
+## Hard rules
+
+- **Never** edit the target skill file before Phase 5 (Fold back). Self-improvement during Phase 3 happens in output drafts only; the skill file changes only after the user answers the Phase 4 questions.
+- **Never** ask the user open-ended questions like "what should I change?" Constrain to A/B/C or yes/no. Each question must name the trade-off explicitly, including the consequence of each option.
+- **Never** mark the skill "done." Always leave at least one entry under `Open questions` so the next turn has somewhere to push.
+- **Always** announce each phase in one sentence so the user can interrupt before you commit to a path.
+- **Always** show a diff (or quoted before/after) when editing the skill in Phase 5.
+
+## Soft rules
+
+- Prefer 3 sharp questions over 8 vague ones in Phase 4.
+- Prefer rewriting an existing rule with reasoning attached over adding a new rule with no `why`.
+- Default to keeping the skill under 200 lines. If it grows past that, surface a split-vs-refactor question.
+- Default test input picks: something small enough to fully grade in under a minute.
 
 ## The loop
 
-1. **Reason out loud.** Have a normal conversation with the model about the problem. Don't try to be clever — just explain why, how, and what trade-offs you care about.
-2. **Distill.** Ask the model to read the conversation and write a `skill.md` capturing the reasoning, decisions, and rules. Save it. This is now the source of truth.
-3. **Turn the crank.** Run the skill on a real input. Have the model:
-   - Produce output.
-   - Grade its own output against the skill.
-   - Improve based on its own grade.
-   - Repeat 1–3 times until the self-grade plateaus.
-4. **Targeted feedback.** Read the final output. Ask the model to ask *you* pointed questions — yes/no or A/B/C choices — about the trade-offs it made or the ambiguities it hit. Add freeform notes where the multiple-choice frame is wrong.
-5. **Fold back.** Have the model rewrite the skill with your feedback baked in. New rules, new examples, new edge cases.
-6. **Always edit the skill.** Future runs go through the skill. New learnings update the skill. The chat is throwaway; the artifact is the asset.
+Execute these phases in order. Do not skip.
 
-## Why pointed questions beat open-ended ones
+### Phase 1 — Locate or distill
 
-"What should I change?" produces sycophancy and noise. Constraining the model to A/B/C surfaces the actual decision points, lets you decide fast, and forces the model to articulate the trade-off explicitly. It also exposes when the model isn't sure — the questions it asks tell you where the skill is thin.
+If a target `skill.md` exists, read it. If not, read the recent conversation and distill it into a draft `skill.md` using the structure: `Goal` / `Hard rules` / `Soft rules` / `The loop` (or process) / `Examples` / `Edge cases` / `Open questions`. Save it before continuing.
 
-## What belongs in a skill.md
+### Phase 2 — Run on test input
 
-- **Goal.** One sentence. What does running this skill produce?
-- **Hard rules.** Things that are always true. (`Never include the ticket prefix.`)
-- **Soft rules.** Defaults and preferences. (`Prefer imperative mood unless the convention says otherwise.`)
-- **Examples with reasoning.** Not just ✓/✗ — *why* the good one is good.
-- **Known edge cases.** And how the skill resolves them.
-- **Open questions.** Anti-pattern: pretending the skill is finished. Mark uncertainty so future turns know where to push.
+Apply the skill to the test input exactly as written. Produce output. Show it to the user verbatim. Do not silently improve it here — Phase 2 is the cold-start baseline.
 
-## When to use it
+### Phase 3 — Self-grade and improve
 
-- Anything you'll do more than three times.
-- Anything where the *quality bar* matters more than speed.
-- Anything where you've caught yourself giving the same correction twice.
+List every rule from `Hard rules` and `Soft rules`. For each, mark the Phase 2 output `pass` or `fail` and quote the offending span. Rewrite the output to address every `fail`. Re-grade. Repeat until either every rule passes or the turn budget is exhausted. Show the final output and the final grade.
 
-## When not to use it
+### Phase 4 — Surface ambiguities as A/B questions
 
-- One-shot tasks.
-- Throwaway exploration where the answer is the point.
-- Work where requirements aren't yet stable enough to encode — keep talking first.
+Identify 2–4 decisions you made in Phase 3 that the skill did not fully specify. For each, write a question with named options and consequences:
 
-## Open frontier
+```
+Q1: <what was ambiguous>
+A) <option A> — <consequence>
+B) <option B> — <consequence>
+```
 
-- **Split vs. improve.** When two reasoning paths conflict inside one skill, do you fork it into two skills, or thread the conflict into the existing one with branching rules? My current rule of thumb: split when the two paths have different *audiences* or different *success criteria*; otherwise improve in place with explicit `if/else` rules.
-- **Democratization.** A skill is only valuable if the team uses it. How do these compound across a team — shared repo? PR review on the skill itself? Skill registries with their own changelogs? This is unsolved.
+Stop and wait for the user to answer. Do not proceed to Phase 5 without answers.
 
-## The bet
+### Phase 5 — Fold back
 
-This is the new way of working: explicit micromanagement on steroids. Not micromanaging the model turn by turn — micromanaging the *rules the model runs by*, captured in a file you can edit, share, and version. The skill is the artifact. The conversations that produced it are exhaust.
+Edit the target `skill.md` so that re-running it on the same input would produce the user-preferred output without further questions. Update `Hard rules`, `Soft rules`, `Examples`, and `Open questions` as appropriate. Show the diff. Do not edit anything outside the skill file.
+
+### Phase 6 — Report and stop
+
+Do not start another turn unless the user asks. Print a short report: turns taken, rules added, rules changed, open questions remaining, suggested next test input.
+
+## Examples
+
+### Example: improving a `pr-title` skill
+
+User has `pr-title.md`. They give you a diff as the test input.
+
+- **Phase 2** output: `Updated the auth middleware to handle expired tokens`
+- **Phase 3** self-grade:
+  - Rule "imperative mood" — `Updated` **fail** (past tense). Rewrite: `Update`.
+  - Rule "≤50 chars" — line is 52 chars **fail**. Rewrite tightens to 43.
+  - Final: `Update auth middleware for expired tokens` — all rules pass.
+- **Phase 4** questions:
+  - `Q1: Refactors with no behavior change — prefix with "refactor:" or use a plain verb? A) refactor: prefix — clearer signal in changelogs. B) plain verb — shorter, matches existing repo style.`
+  - `Q2: PRs touching two unrelated areas — name both or pick the dominant? A) name both — accurate but long. B) dominant area only — punchy but loses information.`
+- **Phase 5**: user picks A, B. Add `Hard rule: Refactors use refactor: prefix.` Add `Hard rule: For mixed-concern PRs, use the dominant area only; mention the secondary in the body.` Remove these from `Open questions`. Add a new `Open question: How to title revert PRs.`
+
+## Edge cases
+
+- **Skill conflicts with itself.** Two rules disagree on the same input. Surface the conflict as a Phase 4 question; do not silently pick one.
+- **User gives no test input.** Refuse to start. Suggest the user paste a real example. Do not invent test inputs.
+- **Self-grade plateau on turn 1.** If the first output passes every rule cold, the skill is too loose. Force a Phase 4 question targeting whatever felt arbitrary while you were producing the output.
+- **Skill grows unwieldy.** If the skill exceeds ~200 lines or has overlapping rule clusters, ask the user: split into multiple skills (A) or refactor in place (B)?
+- **User pushes back on a Phase 5 edit.** Treat their pushback as a fresh Phase 4 answer; revise the diff before applying it.
+
+## Open questions
+
+- How to handle conflicting reasoning when the user wants both options preserved — branching rules inside one skill, or fork into two skills?
+- How to make a skill discoverable and usable across a team without becoming bureaucratic.
+- When to retire a skill versus keep iterating on it.
+- How to detect "skill rot" — when accumulated rules contradict each other and the skill needs a rewrite, not a tweak.

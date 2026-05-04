@@ -17,8 +17,18 @@ You're not building the product. You're building the factory.
 
 ## Read these in order
 
-- [`skill.md`](./skill.md) — the full technique.
+- [`skill.md`](./skill.md) — the skill itself, written for an agent to execute. Drop it at `~/.claude/skills/whetstone/SKILL.md` to install.
+- [`examples/`](./examples/) — two captured runs: Whetstone on a `pr-title` skill, and Whetstone on its own `skill.md` (the meta-loop).
 - [`lightning-talk.md`](./lightning-talk.md) — a 2–3 minute talk with a live demo, if you want to share it with your team.
+
+## Install
+
+```sh
+mkdir -p ~/.claude/skills/whetstone
+cp skill.md ~/.claude/skills/whetstone/SKILL.md
+```
+
+Then in Claude Code: `run the whetstone loop on <path-to-target-skill>` with a real test input.
 
 ## Open frontier
 
