@@ -4,15 +4,15 @@ Target skill: `examples/pr-title/skill.md` (v0.1.0)
 Test input: `examples/pr-title/test-input.md`
 Turn budget: 2
 
-## Phase 1 — Locate
+## Load — locate the skill
 
 Found `examples/pr-title/skill.md`. Loaded its rules. Test input is a single-concern diff (clock-skew tolerance on JWT verify).
 
-## Phase 2 — Run cold
+## Run — cold output
 
 > `Updated the auth middleware to accept tokens with a small amount of clock drift.`
 
-## Phase 3 — Self-grade and improve
+## Grade — self-grade and improve
 
 Pass through 1:
 
@@ -42,7 +42,7 @@ All rules pass. Turn budget not exhausted, but no `fail` remaining → stop grad
 
 **Final output:** `Allow JWT clock skew of 30s in auth middleware`
 
-## Phase 4 — Ambiguities (A/B questions for the user)
+## Ask — ambiguities for the user
 
 While producing the rewrite, three decisions were not specified by the skill:
 
@@ -65,13 +65,13 @@ Q3: Module name format.
    B) Prose — reads like English in changelogs.
 ```
 
-## Phase 5 — Fold back
+## Fold — blocked
 
-Blocked. Waiting on user answers to Q1–Q3 before editing `skill.md`.
+Waiting on user answers to Q1–Q3 before editing `skill.md`.
 
-## Phase 6 — Report (preliminary)
+## Report (preliminary)
 
 - Turns taken: 1 (one rewrite, all rules passed)
-- Rules added: 0 yet (pending Phase 5)
+- Rules added: 0 yet (pending **Fold**)
 - Open questions still on the skill: 2 of 2 (refactors, mixed-concern PRs) — both untouched, but Q1–Q3 above are candidates to add or replace them.
 - Suggested next test input: a refactor-only diff, to force a decision on the first existing open question.
